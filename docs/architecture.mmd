@@ -1,0 +1,49 @@
+```mermaid
+flowchart TB
+    classDef trigger fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#000
+    classDef ai      fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#000
+    classDef store   fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#000
+    classDef integ   fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#000
+    classDef human   fill:#fce7f3,stroke:#db2777,stroke-width:2px,color:#000
+
+    %% Stage 1
+    T1([Operator triggers research]):::trigger --> F11
+    F11["<b>Flow 1.1</b><br/>Read search terms,<br/>copy template, loop"]:::trigger
+    F11 -->|"per search term"| F12
+    F12["<b>Flow 1.2</b><br/>GPT-4 web research<br/>+ JSON parse<br/>+ author lookup"]:::ai
+    F12 --> SHEET[("Google Sheet<br/>Research + state")]:::store
+
+    %% Stage 2
+    SHEET -.->|"watch cell edit"| F21
+    F21["<b>Flow 2.1</b><br/>Detect approved rows<br/>(Y in approval column)"]:::trigger
+    F21 --> F22
+    F22["<b>Flow 2.2</b><br/>GPT-4 validation pass<br/>+ mark for sync"]:::ai
+    F22 --> SHEET
+
+    %% Stage 3
+    SHEET -.->|"watch row status"| F3
+    F3["<b>Flow 3</b><br/>Hunter.io domain +<br/>email enrichment"]:::integ
+    F3 --> GHL[("GoHighLevel CRM<br/>contacts + pipeline")]:::integ
+    F3 -.->|"writes back<br/>contact ID + stage"| SHEET
+
+    %% Stage 4
+    SCHED([Scheduled trigger]):::trigger --> F4
+    F4["<b>Flow 4</b><br/>Fetch unprocessed<br/>Hunter.io leads"]:::trigger
+    F4 --> DS[("Make Datastore<br/>processed lead state")]:::store
+    F4 -->|"per lead"| F5
+
+    %% Stage 5
+    DOC[("Google Doc<br/>brand voice / template")]:::store --> F5
+    F5["<b>Flow 5</b><br/>GPT-4 email draft<br/>(structured JSON output)<br/>+ create GHL opportunity"]:::ai
+    F5 --> SLACK[/"Slack channel<br/>draft + Approve/Reject buttons"/]:::human
+    F5 --> GHL
+
+    %% Stage 6
+    SLACK -.->|"button click"| WH([Webhook]):::trigger
+    WH --> F6
+    F6["<b>Flow 6</b><br/>Route button action:<br/>Approve / Reject /<br/>Edit / Regenerate"]:::ai
+    F6 -->|"Approve"| GHL_SEND["Send via GHL<br/>conversation API"]:::integ
+    F6 -->|"Regenerate"| F5
+    F6 -.->|"Update message"| SLACK
+    GHL_SEND --> GHL
+```

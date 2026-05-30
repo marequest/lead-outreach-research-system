@@ -1,0 +1,3007 @@
+{
+    "name": "2.2 Blog Research -> Approval Process and write to Google Sheets",
+    "flow": [
+        {
+            "id": 6,
+            "module": "scenario-service:StartSubscenario",
+            "version": 2,
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
+                "interface": [
+                    {
+                        "help": "",
+                        "name": "rows",
+                        "spec": {
+                            "type": "any",
+                            "default": "",
+                            "required": false
+                        },
+                        "type": "array",
+                        "label": "",
+                        "required": false
+                    }
+                ]
+            }
+        },
+        {
+            "id": 21,
+            "module": "util:SetVariable2",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "name": "scenario_values",
+                "scope": "roundtrip",
+                "value": "{{6.rows}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "scope": {
+                            "label": "One cycle"
+                        }
+                    }
+                },
+                "expect": [
+                    {
+                        "name": "name",
+                        "type": "text",
+                        "label": "Variable name",
+                        "required": true
+                    },
+                    {
+                        "name": "scope",
+                        "type": "select",
+                        "label": "Variable lifetime",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": "any",
+                        "label": "Variable value"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "scenario_values",
+                        "type": "any",
+                        "label": "scenario_values"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 22,
+            "module": "builtin:BasicFeeder",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "array": "{{21.scenario_values}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "array": {
+                            "mode": "edit"
+                        }
+                    }
+                },
+                "expect": [
+                    {
+                        "mode": "edit",
+                        "name": "array",
+                        "spec": [],
+                        "type": "array",
+                        "label": "Array"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 2,
+            "module": "openai-gpt-3:createModelResponse",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": 5841301
+            },
+            "mapper": {
+                "input": "SYSTEM / ROLE\n\nYou are a Lead Vetting Specialist for influencer and publisher blogs.\nYour task is to strictly approve or reject websites using factual checks.\nIf any step fails, mark the site as Off Limits immediately and do not speculate.\n\nUse browsing: homepage, About page, blog page, and Instagram only.\n\nUSER PROMPT\n\nAnalyze the website at this URL: {{22.`3`}}\n\nFollow the steps in order.\nIf any step fails, mark the site as Off Limits and record the failed step in Notes.\n\nSTEP 2 – Website Activity (Past 12 Months)\nConfirm the site is an active blog\nAt least one post published in the last 12 months\nContent shows originality (personal tone, reviews, original photos)\nEvidence of real product experience (not just product feeds or stock images)\nIf not active → FAIL\n\nSTEP 3 – Monetization and Authenticity\nCheck for affiliate links or disclosures\n(Amazon, LTK, RewardStyle, Impact, affiliate tags)\nConfirm a real person or team:\nPhoto and bio on About page\nIf no identifiable person → FAIL\n\nSTEP 4 – Instagram Review\nFind linked Instagram account\nConfirm posting activity within the last 60 days\nConfirm U.S. location via Instagram bio or About page\nIf Instagram exists but is inactive or location is unclear → FAIL\n\nSTEP 5 – Retailer Check (DEALBREAKER)\nLook for shopping cart, “Add to Cart”, checkout, or product SKUs\nIf the site sells its own inventory directly → FAIL IMMEDIATELY\nMust be a publisher referring traffic elsewhere\n\nSTEP 6 – Site Credibility\nMust be a top-level domain (example.com)\nReject subdomains (blog.example.com, shop.example.com)\n\nSTEP 7 – Contact Info\nFind a direct email address\nIf no email, check for a contact form\nIf neither exists → FAIL\n\nSTEP 8 – Final Decision\nIf all steps pass → Approved (Cold Lead or Warm Lead)\nIf any step fails → Off Limits\n\nOUTPUT FORMAT (JSON ONLY, NO EXTRA TEXT)\n\nReturn valid JSON only using these fields:\n\nwebsite\nwebsite_active_12_months\nmonetization_and_authenticity\ninstagram_url\ninstagram_active_60_days\nretailer\nsite_credibility\ncontact_method\nfinal_verdict\nnotes\n\nDo not include explanations outside the Notes field.",
+                "model": "gpt-4.1-mini",
+                "store": true,
+                "tools": [
+                    {
+                        "type": "web_search_preview",
+                        "user_location": {
+                            "type": "approximate",
+                            "country": "US"
+                        },
+                        "search_context_size": "medium"
+                    }
+                ],
+                "format": {
+                    "name": "GetJsonSchemaAuthors",
+                    "type": "json_schema",
+                    "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"website\": {\n      \"type\": \"string\"\n    },\n    \"website_active_12_months\": {\n      \"type\": \"boolean\"\n    },\n    \"monetization_and_authenticity\": {\n      \"type\": \"boolean\"\n    },\n    \"instagram_url\": {\n      \"type\": \"string\"\n    },\n    \"instagram_active_60_days\": {\n      \"type\": \"boolean\"\n    },\n    \"retailer\": {\n      \"type\": \"boolean\"\n    },\n    \"site_credibility\": {\n      \"type\": \"boolean\"\n    },\n    \"contact_method\": {\n      \"type\": \"string\"\n    },\n    \"final_verdict\": {\n      \"type\": \"string\"\n    },\n    \"notes\": {\n      \"type\": \"string\"\n    }\n  },\n  \"additionalProperties\": false,\n  \"required\": [\n    \"website\",\n    \"website_active_12_months\",\n    \"monetization_and_authenticity\",\n    \"instagram_url\",\n    \"instagram_active_60_days\",\n    \"retailer\",\n    \"site_credibility\",\n    \"contact_method\",\n    \"final_verdict\",\n    \"notes\"\n  ]\n}"
+                },
+                "reasoning": {},
+                "background": false,
+                "truncation": "auto",
+                "temperature": "0.2",
+                "inputContentType": "text",
+                "createConversation": true,
+                "parallel_tool_calls": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "model": {
+                            "mode": "chose",
+                            "label": "gpt-4.1-mini (system)Smaller, faster version of GPT-4.1"
+                        },
+                        "store": {
+                            "mode": "chose"
+                        },
+                        "tools": {
+                            "mode": "chose",
+                            "items": [
+                                {
+                                    "type": {
+                                        "mode": "chose",
+                                        "label": "Web search preview"
+                                    },
+                                    "user_location": {
+                                        "nested": {
+                                            "type": {
+                                                "mode": "chose",
+                                                "label": "Approximate"
+                                            },
+                                            "country": {
+                                                "mode": "chose",
+                                                "label": "United States of America"
+                                            },
+                                            "timezone": {
+                                                "mode": "chose",
+                                                "label": "Empty"
+                                            }
+                                        }
+                                    },
+                                    "search_context_size": {
+                                        "mode": "chose",
+                                        "label": "Medium"
+                                    }
+                                }
+                            ]
+                        },
+                        "format": {
+                            "nested": {
+                                "type": {
+                                    "mode": "chose",
+                                    "label": "JSON schema"
+                                },
+                                "schema": {
+                                    "rpcSearch": {
+                                        "label": "JSON Schema",
+                                        "value": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"website\": {\n      \"type\": \"string\"\n    },\n    \"website_active_12_months\": {\n      \"type\": \"boolean\"\n    },\n    \"monetization_and_authenticity\": {\n      \"type\": \"boolean\"\n    },\n    \"instagram_url\": {\n      \"type\": \"string\"\n    },\n    \"instagram_active_60_days\": {\n      \"type\": \"boolean\"\n    },\n    \"retailer\": {\n      \"type\": \"boolean\"\n    },\n    \"site_credibility\": {\n      \"type\": \"boolean\"\n    },\n    \"contact_method\": {\n      \"type\": \"string\"\n    },\n    \"final_verdict\": {\n      \"type\": \"string\"\n    },\n    \"notes\": {\n      \"type\": \"string\"\n    }\n  },\n  \"additionalProperties\": false,\n  \"required\": [\n    \"website\",\n    \"website_active_12_months\",\n    \"monetization_and_authenticity\",\n    \"instagram_url\",\n    \"instagram_active_60_days\",\n    \"retailer\",\n    \"site_credibility\",\n    \"contact_method\",\n    \"final_verdict\",\n    \"notes\"\n  ]\n}"
+                                    }
+                                },
+                                "strict": {
+                                    "mode": "chose"
+                                }
+                            }
+                        },
+                        "include": {
+                            "mode": "chose"
+                        },
+                        "metadata": {
+                            "mode": "chose"
+                        },
+                        "reasoning": {
+                            "nested": {
+                                "effort": {
+                                    "mode": "chose",
+                                    "label": "Empty"
+                                },
+                                "summary": {
+                                    "mode": "chose",
+                                    "label": "Empty"
+                                }
+                            }
+                        },
+                        "background": {
+                            "mode": "chose"
+                        },
+                        "truncation": {
+                            "mode": "chose",
+                            "label": "Auto"
+                        },
+                        "tool_choice": {
+                            "mode": "chose",
+                            "label": "Empty"
+                        },
+                        "inputContentType": {
+                            "mode": "chose",
+                            "label": "Text prompt"
+                        },
+                        "createConversation": {
+                            "mode": "chose"
+                        },
+                        "parallel_tool_calls": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "openai-gpt-3"
+                            },
+                            "label": "Emma OpenAI connection"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:openai-gpt-3",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "model",
+                        "type": "select",
+                        "label": "Model",
+                        "required": true
+                    },
+                    {
+                        "name": "inputContentType",
+                        "type": "select",
+                        "label": "Prompt Type",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "text",
+                                "image",
+                                "file",
+                                "prompt",
+                                "items"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "max_output_tokens",
+                        "type": "integer",
+                        "label": "Max Output Tokens"
+                    },
+                    {
+                        "name": "tools",
+                        "spec": {
+                            "name": "value",
+                            "spec": [
+                                {
+                                    "name": "type",
+                                    "type": "select",
+                                    "label": "Type",
+                                    "options": [
+                                        {
+                                            "label": "File search",
+                                            "value": "file_search",
+                                            "nested": [
+                                                {
+                                                    "help": "The IDs of the vector stores to search.",
+                                                    "name": "vector_store_ids",
+                                                    "type": "select",
+                                                    "label": "Vector Store IDs",
+                                                    "options": "rpc://openai-gpt-3/1/getVectorStores",
+                                                    "multiple": true,
+                                                    "required": true,
+                                                    "validate": {
+                                                        "maxItems": 2
+                                                    }
+                                                },
+                                                {
+                                                    "help": "A filter to apply based on file attributes.",
+                                                    "name": "filters",
+                                                    "spec": [
+                                                        {
+                                                            "name": "type",
+                                                            "type": "select",
+                                                            "label": "Type",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Equals",
+                                                                    "value": "eq",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The key to compare against the value.",
+                                                                            "name": "key",
+                                                                            "type": "text",
+                                                                            "label": "Key",
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The value to compare against the attribute key",
+                                                                            "name": "value",
+                                                                            "type": "any",
+                                                                            "label": "Value",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Not equal",
+                                                                    "value": "ne",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The key to compare against the value.",
+                                                                            "name": "key",
+                                                                            "type": "text",
+                                                                            "label": "Key",
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The value to compare against the attribute key",
+                                                                            "name": "value",
+                                                                            "type": "any",
+                                                                            "label": "Value",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Greater than",
+                                                                    "value": "gt",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The key to compare against the value.",
+                                                                            "name": "key",
+                                                                            "type": "text",
+                                                                            "label": "Key",
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The value to compare against the attribute key",
+                                                                            "name": "value",
+                                                                            "type": "any",
+                                                                            "label": "Value",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Greater than or equal",
+                                                                    "value": "gte",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The key to compare against the value.",
+                                                                            "name": "key",
+                                                                            "type": "text",
+                                                                            "label": "Key",
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The value to compare against the attribute key",
+                                                                            "name": "value",
+                                                                            "type": "any",
+                                                                            "label": "Value",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Less than",
+                                                                    "value": "lt",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The key to compare against the value.",
+                                                                            "name": "key",
+                                                                            "type": "text",
+                                                                            "label": "Key",
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The value to compare against the attribute key",
+                                                                            "name": "value",
+                                                                            "type": "any",
+                                                                            "label": "Value",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Less than or equal",
+                                                                    "value": "lte",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The key to compare against the value.",
+                                                                            "name": "key",
+                                                                            "type": "text",
+                                                                            "label": "Key",
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The value to compare against the attribute key",
+                                                                            "name": "value",
+                                                                            "type": "any",
+                                                                            "label": "Value",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Compound filter [and]",
+                                                                    "value": "and",
+                                                                    "nested": [
+                                                                        {
+                                                                            "name": "filters",
+                                                                            "spec": {
+                                                                                "spec": [
+                                                                                    {
+                                                                                        "name": "type",
+                                                                                        "type": "select",
+                                                                                        "label": "Type",
+                                                                                        "options": [
+                                                                                            {
+                                                                                                "label": "Equals",
+                                                                                                "value": "eq"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Not equal",
+                                                                                                "value": "ne"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Greater than",
+                                                                                                "value": "gt"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Greater than or equal",
+                                                                                                "value": "gte"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Less than",
+                                                                                                "value": "lt"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Less than or equal",
+                                                                                                "value": "lte"
+                                                                                            }
+                                                                                        ],
+                                                                                        "required": true
+                                                                                    },
+                                                                                    {
+                                                                                        "help": "The key to compare against the value.",
+                                                                                        "name": "key",
+                                                                                        "type": "text",
+                                                                                        "label": "Key",
+                                                                                        "required": true
+                                                                                    },
+                                                                                    {
+                                                                                        "help": "The value to compare against the attribute key",
+                                                                                        "name": "value",
+                                                                                        "type": "any",
+                                                                                        "label": "Value",
+                                                                                        "required": true
+                                                                                    }
+                                                                                ],
+                                                                                "type": "collection",
+                                                                                "label": "Filter"
+                                                                            },
+                                                                            "type": "array",
+                                                                            "label": "Filters",
+                                                                            "labels": {
+                                                                                "add": "Add filter"
+                                                                            },
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Compound filter [or]",
+                                                                    "value": "or",
+                                                                    "nested": [
+                                                                        {
+                                                                            "name": "filters",
+                                                                            "spec": {
+                                                                                "spec": [
+                                                                                    {
+                                                                                        "name": "type",
+                                                                                        "type": "select",
+                                                                                        "label": "Type",
+                                                                                        "options": [
+                                                                                            {
+                                                                                                "label": "Equals",
+                                                                                                "value": "eq"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Not equal",
+                                                                                                "value": "ne"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Greater than",
+                                                                                                "value": "gt"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Greater than or equal",
+                                                                                                "value": "gte"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Less than",
+                                                                                                "value": "lt"
+                                                                                            },
+                                                                                            {
+                                                                                                "label": "Less than or equal",
+                                                                                                "value": "lte"
+                                                                                            }
+                                                                                        ],
+                                                                                        "required": true
+                                                                                    },
+                                                                                    {
+                                                                                        "help": "The key to compare against the value.",
+                                                                                        "name": "key",
+                                                                                        "type": "text",
+                                                                                        "label": "Key",
+                                                                                        "required": true
+                                                                                    },
+                                                                                    {
+                                                                                        "help": "The value to compare against the attribute key",
+                                                                                        "name": "value",
+                                                                                        "type": "any",
+                                                                                        "label": "Value",
+                                                                                        "required": true
+                                                                                    }
+                                                                                ],
+                                                                                "type": "collection",
+                                                                                "label": "Filter"
+                                                                            },
+                                                                            "type": "array",
+                                                                            "label": "Filters",
+                                                                            "labels": {
+                                                                                "add": "Add filter"
+                                                                            },
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Filters"
+                                                },
+                                                {
+                                                    "name": "max_num_results",
+                                                    "type": "integer",
+                                                    "label": "Max Results Number",
+                                                    "validate": {
+                                                        "max": 50,
+                                                        "min": 1
+                                                    }
+                                                },
+                                                {
+                                                    "help": "Ranking options for search.",
+                                                    "name": "ranking_options",
+                                                    "spec": [
+                                                        {
+                                                            "help": "The ranker to use for the file search.",
+                                                            "name": "ranker",
+                                                            "type": "select",
+                                                            "label": "Ranker",
+                                                            "options": [
+                                                                {
+                                                                    "label": "auto",
+                                                                    "value": "auto"
+                                                                },
+                                                                {
+                                                                    "label": "default-2024-08-21",
+                                                                    "value": "default-2024-08-21"
+                                                                },
+                                                                {
+                                                                    "label": "default-2024-11-15",
+                                                                    "value": "default-2024-11-15"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "help": "The score threshold for the file search. Numbers closer to `1` will attempt to return only the most relevant results, but may return fewer results.",
+                                                            "name": "score_threshold",
+                                                            "type": "number",
+                                                            "label": "Score Threshold",
+                                                            "validate": {
+                                                                "max": 1,
+                                                                "min": 0
+                                                            }
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Ranking Options"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Function",
+                                            "value": "function",
+                                            "nested": [
+                                                {
+                                                    "help": "The name of the function to call.",
+                                                    "name": "name",
+                                                    "type": "text",
+                                                    "label": "Name",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "A JSON schema object describing the parameters of the function.",
+                                                    "name": "parameters",
+                                                    "type": "json",
+                                                    "label": "Parameters",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Whether to enforce strict parameter validation.",
+                                                    "name": "strict",
+                                                    "type": "boolean",
+                                                    "label": "Strict",
+                                                    "default": true,
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "A description of the function.",
+                                                    "name": "description",
+                                                    "type": "text",
+                                                    "label": "Description"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Computer use preview",
+                                            "value": "computer_use_preview",
+                                            "nested": [
+                                                {
+                                                    "help": "The height of the computer display.",
+                                                    "name": "display_height",
+                                                    "type": "number",
+                                                    "label": "Display Height",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "The width of the computer display.",
+                                                    "name": "display_width",
+                                                    "type": "number",
+                                                    "label": "Display Width",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "The type of computer environment to control.",
+                                                    "name": "environment",
+                                                    "type": "select",
+                                                    "label": "Environment",
+                                                    "options": [
+                                                        {
+                                                            "label": "Windows",
+                                                            "value": "windows"
+                                                        },
+                                                        {
+                                                            "label": "Mac",
+                                                            "value": "mac"
+                                                        },
+                                                        {
+                                                            "label": "Linux",
+                                                            "value": "linux"
+                                                        },
+                                                        {
+                                                            "label": "Browser",
+                                                            "value": "browser"
+                                                        }
+                                                    ],
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Web search preview",
+                                            "value": "web_search_preview",
+                                            "nested": [
+                                                {
+                                                    "help": "High level guidance for the amount of context window space to use for the search. Medium is the default value.",
+                                                    "name": "search_context_size",
+                                                    "type": "select",
+                                                    "label": "Search Context Size",
+                                                    "options": [
+                                                        {
+                                                            "label": "Low",
+                                                            "value": "low"
+                                                        },
+                                                        {
+                                                            "label": "Medium",
+                                                            "value": "medium"
+                                                        },
+                                                        {
+                                                            "label": "High",
+                                                            "value": "high"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "Approximate location parameters for the search.",
+                                                    "name": "user_location",
+                                                    "spec": [
+                                                        {
+                                                            "help": "The type of location approximation.",
+                                                            "name": "type",
+                                                            "type": "select",
+                                                            "label": "Type",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Approximate",
+                                                                    "value": "approximate"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "help": "The city of the user, e.g. `San Francisco`.",
+                                                            "name": "city",
+                                                            "type": "text",
+                                                            "label": "City"
+                                                        },
+                                                        {
+                                                            "help": "The two-letter ISO country code of the user, e.g. `US`.",
+                                                            "name": "country",
+                                                            "type": "select",
+                                                            "label": "Country",
+                                                            "options": "rpc://openai-gpt-3/1/getCountryCodes"
+                                                        },
+                                                        {
+                                                            "help": "The region of the user, e.g. `California`.",
+                                                            "name": "region",
+                                                            "type": "text",
+                                                            "label": "Region"
+                                                        },
+                                                        {
+                                                            "help": "The timezone of the user, e.g. `America/Los_Angeles`.",
+                                                            "name": "timezone",
+                                                            "type": "timezone",
+                                                            "label": "Timezone"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "User Location"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Web search preview (2025_03_11)",
+                                            "value": "web_search_preview_2025_03_11",
+                                            "nested": [
+                                                {
+                                                    "help": "High level guidance for the amount of context window space to use for the search. Medium is the default value.",
+                                                    "name": "search_context_size",
+                                                    "type": "select",
+                                                    "label": "Search Context Size",
+                                                    "options": [
+                                                        {
+                                                            "label": "Low",
+                                                            "value": "low"
+                                                        },
+                                                        {
+                                                            "label": "Medium",
+                                                            "value": "medium"
+                                                        },
+                                                        {
+                                                            "label": "High",
+                                                            "value": "high"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "Approximate location parameters for the search.",
+                                                    "name": "user_location",
+                                                    "spec": [
+                                                        {
+                                                            "help": "The type of location approximation.",
+                                                            "name": "type",
+                                                            "type": "select",
+                                                            "label": "Type",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Approximate",
+                                                                    "value": "approximate"
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "help": "The city of the user, e.g. `San Francisco`.",
+                                                            "name": "city",
+                                                            "type": "text",
+                                                            "label": "City"
+                                                        },
+                                                        {
+                                                            "help": "The two-letter ISO country code of the user, e.g. `US`.",
+                                                            "name": "country",
+                                                            "type": "select",
+                                                            "label": "Country",
+                                                            "options": "rpc://openai-gpt-3/1/getCountryCodes"
+                                                        },
+                                                        {
+                                                            "help": "The region of the user, e.g. `California`.",
+                                                            "name": "region",
+                                                            "type": "text",
+                                                            "label": "Region"
+                                                        },
+                                                        {
+                                                            "help": "The timezone of the user, e.g. `America/Los_Angeles`.",
+                                                            "name": "timezone",
+                                                            "type": "timezone",
+                                                            "label": "Timezone"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "User Location"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "MCP",
+                                            "value": "mcp",
+                                            "nested": [
+                                                {
+                                                    "text": "MCP requests will automatically be approved.",
+                                                    "type": "banner",
+                                                    "theme": "info"
+                                                },
+                                                {
+                                                    "name": "require_approval",
+                                                    "type": "hidden",
+                                                    "label": "Require Approval",
+                                                    "default": "never"
+                                                },
+                                                {
+                                                    "help": "A label for this MCP server, used to identify it in tool calls.",
+                                                    "name": "server_label",
+                                                    "type": "text",
+                                                    "label": "Server Label",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "The URL for the MCP server.",
+                                                    "name": "server_url",
+                                                    "type": "url",
+                                                    "label": "Server URL",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "List of allowed tool names.",
+                                                    "name": "allowed_tools",
+                                                    "spec": {
+                                                        "type": "text",
+                                                        "label": "Tool"
+                                                    },
+                                                    "type": "array",
+                                                    "label": "Allowed Tools",
+                                                    "labels": {
+                                                        "add": "Add allowed tool"
+                                                    }
+                                                },
+                                                {
+                                                    "help": "Optional HTTP headers to send to the MCP server. Use for authentication or other purposes.",
+                                                    "name": "headers",
+                                                    "spec": {
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "collection",
+                                                        "label": "Header"
+                                                    },
+                                                    "type": "array",
+                                                    "label": "Headers",
+                                                    "labels": {
+                                                        "add": "Add header"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Code interpreter",
+                                            "value": "code_interpreter",
+                                            "nested": [
+                                                {
+                                                    "help": "**Container**\nA container is a fully sandboxed virtual machine where the model runs Python code.\n\n**Expiration Time**\nContainers expire if unused for 20 minutes. The expiration timer is reset after any operation on the container.",
+                                                    "name": "container_type",
+                                                    "type": "select",
+                                                    "label": "Container type",
+                                                    "options": [
+                                                        {
+                                                            "label": "Use existing container",
+                                                            "value": "existing_container",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "container",
+                                                                    "type": "select",
+                                                                    "label": "Container",
+                                                                    "options": {
+                                                                        "store": "rpc://openai-gpt-3/1/getContainers"
+                                                                    },
+                                                                    "mappable": {
+                                                                        "help": "Map the container ID. For example: `cntr_6878d51b5ffc8191b7c32c11c747cf4e`."
+                                                                    },
+                                                                    "required": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Create new container",
+                                                            "value": "new_container",
+                                                            "nested": [
+                                                                {
+                                                                    "name": "container",
+                                                                    "spec": [
+                                                                        {
+                                                                            "help": "An optional list of uploaded files to make available to your code.",
+                                                                            "name": "file_ids",
+                                                                            "spec": {
+                                                                                "type": "select",
+                                                                                "label": "File ID",
+                                                                                "options": "rpc://openai-gpt-3/1/getFiles"
+                                                                            },
+                                                                            "type": "array",
+                                                                            "label": "File IDs",
+                                                                            "labels": {
+                                                                                "add": "Add file ID"
+                                                                            }
+                                                                        }
+                                                                    ],
+                                                                    "type": "collection",
+                                                                    "label": "Container"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "required": true
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Image generation",
+                                            "value": "image_generation",
+                                            "nested": [
+                                                {
+                                                    "help": "Background type for the generated image.",
+                                                    "name": "background",
+                                                    "type": "select",
+                                                    "label": "Background",
+                                                    "options": [
+                                                        {
+                                                            "label": "Auto",
+                                                            "value": "auto"
+                                                        },
+                                                        {
+                                                            "label": "Transparent",
+                                                            "value": "transparent"
+                                                        },
+                                                        {
+                                                            "label": "Opaque",
+                                                            "value": "opaque"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "Controls how much effort the model will exert to match the style and features of input images, especially facial features.",
+                                                    "name": "input_fidelity",
+                                                    "type": "select",
+                                                    "label": "Input Fidelity",
+                                                    "options": [
+                                                        {
+                                                            "label": "Low",
+                                                            "value": "low"
+                                                        },
+                                                        {
+                                                            "label": "High",
+                                                            "value": "high"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "Optional mask for inpainting.",
+                                                    "name": "input_image_mask",
+                                                    "spec": [
+                                                        {
+                                                            "name": "mask_input_type",
+                                                            "type": "select",
+                                                            "label": "Mask Input Type",
+                                                            "options": [
+                                                                {
+                                                                    "label": "File ID",
+                                                                    "value": "id",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The ID of the file to be sent to the model.",
+                                                                            "name": "file_id",
+                                                                            "type": "select",
+                                                                            "label": "File ID",
+                                                                            "options": "rpc://openai-gpt-3/1/getFiles",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    "label": "Image URL",
+                                                                    "value": "url",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The URL of the image to be sent to the model.",
+                                                                            "name": "image_url",
+                                                                            "type": "url",
+                                                                            "label": "Image URL",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Input Image Mask"
+                                                },
+                                                {
+                                                    "help": "Moderation level for the generated image.",
+                                                    "name": "moderation",
+                                                    "type": "select",
+                                                    "label": "Moderation",
+                                                    "options": [
+                                                        {
+                                                            "label": "Auto",
+                                                            "value": "auto"
+                                                        },
+                                                        {
+                                                            "label": "Low",
+                                                            "value": "low"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "The output format of the generated image.",
+                                                    "name": "output_format",
+                                                    "type": "select",
+                                                    "label": "Output Format",
+                                                    "options": [
+                                                        {
+                                                            "label": "PNG",
+                                                            "value": "png"
+                                                        },
+                                                        {
+                                                            "label": "WEBP",
+                                                            "value": "webp",
+                                                            "nested": [
+                                                                {
+                                                                    "help": "Compression level for the output image.",
+                                                                    "name": "output_compression",
+                                                                    "type": "number",
+                                                                    "label": "Output Compression",
+                                                                    "validate": {
+                                                                        "max": 100,
+                                                                        "min": 0
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "JPEG",
+                                                            "value": "jpeg",
+                                                            "nested": [
+                                                                {
+                                                                    "help": "Compression level for the output image.",
+                                                                    "name": "output_compression",
+                                                                    "type": "number",
+                                                                    "label": "Output Compression",
+                                                                    "validate": {
+                                                                        "max": 100,
+                                                                        "min": 0
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "The quality of the generated image.",
+                                                    "name": "quality",
+                                                    "type": "select",
+                                                    "label": "Quality",
+                                                    "options": [
+                                                        {
+                                                            "label": "Auto",
+                                                            "value": "auto"
+                                                        },
+                                                        {
+                                                            "label": "Low",
+                                                            "value": "low"
+                                                        },
+                                                        {
+                                                            "label": "Medium",
+                                                            "value": "medium"
+                                                        },
+                                                        {
+                                                            "label": "High",
+                                                            "value": "high"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "help": "The size of the generated image.",
+                                                    "name": "size",
+                                                    "type": "select",
+                                                    "label": "Size",
+                                                    "options": [
+                                                        {
+                                                            "label": "1024x1024",
+                                                            "value": "1024x1024"
+                                                        },
+                                                        {
+                                                            "label": "1024x1536",
+                                                            "value": "1024x1536"
+                                                        },
+                                                        {
+                                                            "label": "1536x1024",
+                                                            "value": "1536x1024"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "label": "Custom",
+                                            "value": "custom",
+                                            "nested": [
+                                                {
+                                                    "help": "The name of the custom tool, used to identify it in tool calls, for example: `abc`, `abc_defg`.",
+                                                    "name": "name",
+                                                    "type": "text",
+                                                    "label": "Name",
+                                                    "required": true
+                                                },
+                                                {
+                                                    "help": "Description of the custom tool, used to provide more context.",
+                                                    "name": "description",
+                                                    "type": "text",
+                                                    "label": "Description"
+                                                },
+                                                {
+                                                    "name": "format",
+                                                    "spec": [
+                                                        {
+                                                            "name": "type",
+                                                            "type": "select",
+                                                            "label": "Type",
+                                                            "options": [
+                                                                {
+                                                                    "label": "Text",
+                                                                    "value": "text"
+                                                                },
+                                                                {
+                                                                    "label": "Grammar",
+                                                                    "value": "grammar",
+                                                                    "nested": [
+                                                                        {
+                                                                            "help": "The syntax of the grammar definition.",
+                                                                            "name": "syntax",
+                                                                            "type": "select",
+                                                                            "label": "Syntax",
+                                                                            "options": [
+                                                                                {
+                                                                                    "label": "Lark",
+                                                                                    "value": "lark"
+                                                                                },
+                                                                                {
+                                                                                    "label": "Regex",
+                                                                                    "value": "regex"
+                                                                                }
+                                                                            ],
+                                                                            "required": true
+                                                                        },
+                                                                        {
+                                                                            "help": "The grammar definition.",
+                                                                            "name": "definition",
+                                                                            "type": "text",
+                                                                            "label": "Definition",
+                                                                            "required": true
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Format"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "required": true
+                                }
+                            ],
+                            "type": "collection",
+                            "label": "Tool"
+                        },
+                        "type": "array",
+                        "label": "Tools"
+                    },
+                    {
+                        "name": "tool_choice",
+                        "type": "select",
+                        "label": "Tool Choice",
+                        "validate": {
+                            "enum": [
+                                "none",
+                                "auto",
+                                "required",
+                                "file_search",
+                                "web_search_preview",
+                                "computer_use_preview",
+                                "code_interpreter",
+                                "function",
+                                "custom",
+                                "allowed_tools"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parallel_tool_calls",
+                        "type": "boolean",
+                        "label": "Parallel Tool Calls"
+                    },
+                    {
+                        "name": "background",
+                        "type": "boolean",
+                        "label": "Run in Background"
+                    },
+                    {
+                        "name": "conversationId",
+                        "type": "text",
+                        "label": "Conversation ID"
+                    },
+                    {
+                        "name": "createConversation",
+                        "type": "boolean",
+                        "label": "Create a new conversation",
+                        "required": true
+                    },
+                    {
+                        "name": "temperature",
+                        "type": "number",
+                        "label": "Temperature",
+                        "validate": {
+                            "max": 2,
+                            "min": 0
+                        }
+                    },
+                    {
+                        "name": "top_p",
+                        "type": "number",
+                        "label": "Top P"
+                    },
+                    {
+                        "name": "store",
+                        "type": "boolean",
+                        "label": "Store"
+                    },
+                    {
+                        "name": "previous_response_id",
+                        "type": "text",
+                        "label": "Previous Response ID"
+                    },
+                    {
+                        "name": "instructions",
+                        "type": "text",
+                        "label": "Instructions"
+                    },
+                    {
+                        "name": "reasoning",
+                        "spec": [
+                            {
+                                "name": "effort",
+                                "type": "select",
+                                "label": "Effort",
+                                "validate": {
+                                    "enum": [
+                                        "none",
+                                        "minimal",
+                                        "low",
+                                        "medium",
+                                        "high",
+                                        "xhigh"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "summary",
+                                "type": "select",
+                                "label": "Summary",
+                                "validate": {
+                                    "enum": [
+                                        "auto",
+                                        "concise",
+                                        "detailed"
+                                    ]
+                                }
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Reasoning"
+                    },
+                    {
+                        "name": "format",
+                        "spec": [
+                            {
+                                "name": "type",
+                                "type": "select",
+                                "label": "Type",
+                                "validate": {
+                                    "enum": [
+                                        "text",
+                                        "json_schema",
+                                        "json_object"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name",
+                                "required": true,
+                                "validate": {
+                                    "pattern": "^[a-zA-Z0-9_-]+$"
+                                }
+                            },
+                            {
+                                "name": "schema",
+                                "type": "json",
+                                "label": "Schema",
+                                "required": true
+                            },
+                            {
+                                "name": "description",
+                                "type": "text",
+                                "label": "Description"
+                            },
+                            {
+                                "name": "strict",
+                                "type": "boolean",
+                                "label": "Strict"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Output Format"
+                    },
+                    {
+                        "name": "truncation",
+                        "type": "select",
+                        "label": "Truncation",
+                        "validate": {
+                            "enum": [
+                                "auto",
+                                "disabled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "type": "select",
+                        "label": "Include",
+                        "multiple": true,
+                        "validate": {
+                            "enum": [
+                                "file_search_call.results",
+                                "code_interpreter_call.outputs",
+                                "message.input_image.image_url",
+                                "computer_call_output.output.image_url"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "metadata",
+                        "spec": {
+                            "name": "value",
+                            "spec": [
+                                {
+                                    "name": "key",
+                                    "type": "text",
+                                    "label": "Key"
+                                },
+                                {
+                                    "name": "value",
+                                    "type": "text",
+                                    "label": "Value"
+                                }
+                            ],
+                            "type": "collection",
+                            "label": "Metadata"
+                        },
+                        "type": "array",
+                        "label": "Metadata"
+                    },
+                    {
+                        "name": "input",
+                        "type": "text",
+                        "label": "Prompt"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "result",
+                        "type": "any",
+                        "label": "Result"
+                    },
+                    {
+                        "name": "conversationId",
+                        "type": "text",
+                        "label": "Conversation ID"
+                    },
+                    {
+                        "name": "raw_result",
+                        "type": "any",
+                        "label": "Raw Result"
+                    },
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "Response ID"
+                    },
+                    {
+                        "name": "object",
+                        "type": "text",
+                        "label": "Object"
+                    },
+                    {
+                        "name": "created_at",
+                        "type": "date",
+                        "label": "Created at"
+                    },
+                    {
+                        "name": "status",
+                        "type": "text",
+                        "label": "Status"
+                    },
+                    {
+                        "name": "background",
+                        "type": "boolean",
+                        "label": "Background"
+                    },
+                    {
+                        "name": "billing",
+                        "spec": [
+                            {
+                                "name": "payer",
+                                "type": "text",
+                                "label": "Payer"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Billing"
+                    },
+                    {
+                        "name": "error",
+                        "type": "text",
+                        "label": "Error"
+                    },
+                    {
+                        "name": "max_tool_calls",
+                        "type": "number",
+                        "label": "Max Tool Calls"
+                    },
+                    {
+                        "name": "top_logprobs",
+                        "type": "number",
+                        "label": "Top Logprobs"
+                    },
+                    {
+                        "name": "incomplete_details",
+                        "spec": [
+                            {
+                                "name": "reason",
+                                "type": "text",
+                                "label": "Reason"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Incomplete Details"
+                    },
+                    {
+                        "name": "instructions",
+                        "type": "any",
+                        "label": "Instructions"
+                    },
+                    {
+                        "name": "max_output_tokens",
+                        "type": "number",
+                        "label": "Max Output Tokens"
+                    },
+                    {
+                        "name": "model",
+                        "type": "text",
+                        "label": "Model"
+                    },
+                    {
+                        "name": "output",
+                        "spec": [
+                            {
+                                "name": "input",
+                                "type": "text",
+                                "label": "Input"
+                            },
+                            {
+                                "name": "type",
+                                "type": "text",
+                                "label": "Type"
+                            },
+                            {
+                                "name": "id",
+                                "type": "text",
+                                "label": "ID"
+                            },
+                            {
+                                "name": "server_label",
+                                "type": "text",
+                                "label": "Server Label"
+                            },
+                            {
+                                "name": "background",
+                                "type": "text",
+                                "label": "Background"
+                            },
+                            {
+                                "name": "moderation",
+                                "type": "text",
+                                "label": "Moderation"
+                            },
+                            {
+                                "name": "n",
+                                "type": "number",
+                                "label": "N"
+                            },
+                            {
+                                "name": "output_compression",
+                                "type": "number",
+                                "label": "Output compression"
+                            },
+                            {
+                                "name": "output_format",
+                                "type": "text",
+                                "label": "Output format"
+                            },
+                            {
+                                "name": "quality",
+                                "type": "text",
+                                "label": "Quality"
+                            },
+                            {
+                                "name": "size",
+                                "type": "text",
+                                "label": "Size"
+                            },
+                            {
+                                "name": "revised_prompt",
+                                "type": "text",
+                                "label": "Revised Prompt"
+                            },
+                            {
+                                "name": "filename",
+                                "type": "filename",
+                                "label": "File name",
+                                "semantic": "file:name"
+                            },
+                            {
+                                "name": "filedata",
+                                "type": "buffer",
+                                "label": "File data",
+                                "semantic": "file:data"
+                            },
+                            {
+                                "name": "tools",
+                                "spec": {
+                                    "spec": [
+                                        {
+                                            "name": "annotations",
+                                            "type": "text",
+                                            "label": "Annotations"
+                                        },
+                                        {
+                                            "name": "description",
+                                            "type": "text",
+                                            "label": "Description"
+                                        },
+                                        {
+                                            "name": "input_schema",
+                                            "spec": [
+                                                {
+                                                    "name": "type",
+                                                    "type": "text",
+                                                    "label": "Type"
+                                                },
+                                                {
+                                                    "name": "properties",
+                                                    "spec": [
+                                                        {
+                                                            "name": "query",
+                                                            "spec": [
+                                                                {
+                                                                    "name": "type",
+                                                                    "type": "text",
+                                                                    "label": "Type"
+                                                                },
+                                                                {
+                                                                    "name": "description",
+                                                                    "type": "text",
+                                                                    "label": "Description"
+                                                                }
+                                                            ],
+                                                            "type": "collection",
+                                                            "label": "Query"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Properties"
+                                                },
+                                                {
+                                                    "name": "required",
+                                                    "spec": {
+                                                        "type": "text"
+                                                    },
+                                                    "type": "array",
+                                                    "label": "Required"
+                                                },
+                                                {
+                                                    "name": "additionalProperties",
+                                                    "type": "boolean",
+                                                    "label": "Additional Properties"
+                                                },
+                                                {
+                                                    "name": "$schema",
+                                                    "type": "text",
+                                                    "label": "Schema"
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Input Schema"
+                                        },
+                                        {
+                                            "name": "name",
+                                            "type": "text",
+                                            "label": "Name"
+                                        },
+                                        {
+                                            "name": "container",
+                                            "spec": [
+                                                {
+                                                    "name": "type",
+                                                    "type": "text",
+                                                    "label": "Type"
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Container"
+                                        }
+                                    ],
+                                    "type": "collection"
+                                },
+                                "type": "array",
+                                "label": "Tools"
+                            },
+                            {
+                                "name": "approval_request_id",
+                                "type": "text",
+                                "label": "Approval Request ID"
+                            },
+                            {
+                                "name": "error",
+                                "spec": [
+                                    {
+                                        "name": "type",
+                                        "type": "text",
+                                        "label": "Type"
+                                    },
+                                    {
+                                        "name": "content",
+                                        "spec": {
+                                            "spec": [
+                                                {
+                                                    "name": "type",
+                                                    "type": "text",
+                                                    "label": "Type"
+                                                },
+                                                {
+                                                    "name": "text",
+                                                    "type": "text",
+                                                    "label": "Text"
+                                                },
+                                                {
+                                                    "name": "annotations",
+                                                    "type": "text",
+                                                    "label": "Annotations"
+                                                }
+                                            ],
+                                            "type": "collection"
+                                        },
+                                        "type": "array",
+                                        "label": "Content"
+                                    }
+                                ],
+                                "type": "collection",
+                                "label": "Error"
+                            },
+                            {
+                                "name": "output",
+                                "type": "text",
+                                "label": "Output"
+                            },
+                            {
+                                "name": "status",
+                                "type": "text",
+                                "label": "Status"
+                            },
+                            {
+                                "name": "queries",
+                                "spec": {
+                                    "type": "text"
+                                },
+                                "type": "array",
+                                "label": "Queries"
+                            },
+                            {
+                                "name": "results",
+                                "spec": {
+                                    "spec": [
+                                        {
+                                            "name": "attributes",
+                                            "type": "collection",
+                                            "label": "Attributes"
+                                        },
+                                        {
+                                            "name": "file_id",
+                                            "type": "text",
+                                            "label": "File ID"
+                                        },
+                                        {
+                                            "name": "filename",
+                                            "type": "text",
+                                            "label": "File name"
+                                        },
+                                        {
+                                            "name": "score",
+                                            "type": "number",
+                                            "label": "Score"
+                                        },
+                                        {
+                                            "name": "text",
+                                            "type": "text",
+                                            "label": "Text"
+                                        }
+                                    ],
+                                    "type": "collection"
+                                },
+                                "type": "array",
+                                "label": "Results"
+                            },
+                            {
+                                "name": "role",
+                                "type": "text",
+                                "label": "Role"
+                            },
+                            {
+                                "name": "call_id",
+                                "type": "text",
+                                "label": "Call ID"
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            },
+                            {
+                                "name": "arguments",
+                                "type": "text",
+                                "label": "Arguments"
+                            },
+                            {
+                                "name": "summary",
+                                "spec": [
+                                    {
+                                        "name": "type",
+                                        "type": "text",
+                                        "label": "Type"
+                                    },
+                                    {
+                                        "name": "text",
+                                        "type": "text",
+                                        "label": "Text"
+                                    }
+                                ],
+                                "type": "array",
+                                "label": "Summary"
+                            },
+                            {
+                                "name": "content",
+                                "spec": {
+                                    "spec": [
+                                        {
+                                            "name": "type",
+                                            "type": "text",
+                                            "label": "Type"
+                                        },
+                                        {
+                                            "name": "text",
+                                            "type": "text",
+                                            "label": "Text"
+                                        },
+                                        {
+                                            "name": "annotations",
+                                            "spec": {
+                                                "spec": [
+                                                    {
+                                                        "name": "type",
+                                                        "type": "text",
+                                                        "label": "Type"
+                                                    },
+                                                    {
+                                                        "name": "container_id",
+                                                        "type": "text",
+                                                        "label": "Container ID"
+                                                    },
+                                                    {
+                                                        "name": "end_index",
+                                                        "type": "uinteger",
+                                                        "label": "End Index"
+                                                    },
+                                                    {
+                                                        "name": "start_index",
+                                                        "type": "uinteger",
+                                                        "label": "Start Index"
+                                                    },
+                                                    {
+                                                        "name": "title",
+                                                        "type": "text",
+                                                        "label": "Title"
+                                                    },
+                                                    {
+                                                        "name": "file_id",
+                                                        "type": "text",
+                                                        "label": "File ID"
+                                                    },
+                                                    {
+                                                        "name": "filename",
+                                                        "type": "text",
+                                                        "label": "File name"
+                                                    },
+                                                    {
+                                                        "name": "index",
+                                                        "type": "uinteger",
+                                                        "label": "Index"
+                                                    },
+                                                    {
+                                                        "name": "url",
+                                                        "type": "url",
+                                                        "label": "URL"
+                                                    },
+                                                    {
+                                                        "name": "container_id",
+                                                        "type": "text",
+                                                        "label": "Container ID"
+                                                    }
+                                                ],
+                                                "type": "collection"
+                                            },
+                                            "type": "array",
+                                            "label": "Annotations"
+                                        },
+                                        {
+                                            "name": "logprobs",
+                                            "spec": {
+                                                "type": "text"
+                                            },
+                                            "type": "array",
+                                            "label": "Logprobs"
+                                        }
+                                    ],
+                                    "type": "collection"
+                                },
+                                "type": "array",
+                                "label": "Content"
+                            },
+                            {
+                                "name": "code",
+                                "type": "text",
+                                "label": "Code"
+                            },
+                            {
+                                "name": "container_id",
+                                "type": "text",
+                                "label": "Container ID"
+                            },
+                            {
+                                "name": "outputs",
+                                "spec": {
+                                    "spec": [
+                                        {
+                                            "name": "type",
+                                            "type": "text",
+                                            "label": "Type"
+                                        },
+                                        {
+                                            "name": "filename",
+                                            "type": "text",
+                                            "label": "Filename",
+                                            "semantic": "file:name"
+                                        },
+                                        {
+                                            "name": "filedata",
+                                            "type": "buffer",
+                                            "label": "Data",
+                                            "semantic": "file:data"
+                                        },
+                                        {
+                                            "name": "url",
+                                            "type": "text",
+                                            "label": "Base64 data URL"
+                                        },
+                                        {
+                                            "name": "logs",
+                                            "type": "text",
+                                            "label": "Logs"
+                                        }
+                                    ],
+                                    "type": "collection"
+                                },
+                                "type": "array",
+                                "label": "Outputs"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Output"
+                    },
+                    {
+                        "name": "parallel_tool_calls",
+                        "type": "boolean",
+                        "label": "Parallel Tool Calls"
+                    },
+                    {
+                        "name": "previous_response_id",
+                        "type": "text",
+                        "label": "Previous Response ID"
+                    },
+                    {
+                        "name": "prompt",
+                        "spec": [
+                            {
+                                "name": "id",
+                                "type": "text",
+                                "label": "ID"
+                            },
+                            {
+                                "name": "variables",
+                                "type": "array",
+                                "label": "Variables"
+                            },
+                            {
+                                "name": "version",
+                                "type": "text",
+                                "label": "Version"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Prompt"
+                    },
+                    {
+                        "name": "reasoning",
+                        "spec": [
+                            {
+                                "name": "effort",
+                                "type": "text",
+                                "label": "Effort"
+                            },
+                            {
+                                "name": "summary",
+                                "type": "text",
+                                "label": "Summary"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Reasoning"
+                    },
+                    {
+                        "name": "service_tier",
+                        "type": "text",
+                        "label": "Service Tier"
+                    },
+                    {
+                        "name": "store",
+                        "type": "boolean",
+                        "label": "Store"
+                    },
+                    {
+                        "name": "temperature",
+                        "type": "number",
+                        "label": "Temperature"
+                    },
+                    {
+                        "name": "text",
+                        "spec": [
+                            {
+                                "name": "format",
+                                "spec": [
+                                    {
+                                        "name": "type",
+                                        "type": "text",
+                                        "label": "Type"
+                                    },
+                                    {
+                                        "name": "description",
+                                        "type": "text",
+                                        "label": "Description"
+                                    },
+                                    {
+                                        "name": "name",
+                                        "type": "text",
+                                        "label": "Name"
+                                    },
+                                    {
+                                        "name": "schema",
+                                        "spec": [
+                                            {
+                                                "name": "type",
+                                                "type": "text",
+                                                "label": "Type"
+                                            },
+                                            {
+                                                "name": "properties",
+                                                "type": "collection",
+                                                "label": "Properties"
+                                            },
+                                            {
+                                                "name": "additionalProperties",
+                                                "type": "boolean",
+                                                "label": "Additional Properties"
+                                            },
+                                            {
+                                                "name": "required",
+                                                "type": "array",
+                                                "label": "Required"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Schema"
+                                    },
+                                    {
+                                        "name": "strict",
+                                        "type": "boolean",
+                                        "label": "Strict"
+                                    }
+                                ],
+                                "type": "collection",
+                                "label": "Format"
+                            },
+                            {
+                                "name": "verbosity",
+                                "type": "text",
+                                "label": "Verbosity"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Text"
+                    },
+                    {
+                        "name": "tool_choice",
+                        "spec": [
+                            {
+                                "name": "type",
+                                "type": "text",
+                                "label": "Type"
+                            },
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            },
+                            {
+                                "name": "mode",
+                                "type": "text",
+                                "label": "Mode"
+                            },
+                            {
+                                "name": "tools",
+                                "spec": [
+                                    {
+                                        "name": "type",
+                                        "type": "text",
+                                        "label": "Type"
+                                    },
+                                    {
+                                        "name": "name",
+                                        "type": "text",
+                                        "label": "Name"
+                                    },
+                                    {
+                                        "name": "server_label",
+                                        "type": "text",
+                                        "label": "Server Label"
+                                    }
+                                ],
+                                "type": "array",
+                                "label": "Tools"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Tool Choice"
+                    },
+                    {
+                        "name": "tools",
+                        "spec": {
+                            "spec": [
+                                {
+                                    "name": "type",
+                                    "type": "text",
+                                    "label": "Type"
+                                },
+                                {
+                                    "name": "search_context_size",
+                                    "type": "text",
+                                    "label": "Search Context Size"
+                                },
+                                {
+                                    "name": "user_location",
+                                    "spec": [
+                                        {
+                                            "name": "type",
+                                            "type": "text",
+                                            "label": "Type"
+                                        },
+                                        {
+                                            "name": "city",
+                                            "type": "text",
+                                            "label": "City"
+                                        },
+                                        {
+                                            "name": "country",
+                                            "type": "text",
+                                            "label": "Country"
+                                        },
+                                        {
+                                            "name": "region",
+                                            "type": "text",
+                                            "label": "Region"
+                                        },
+                                        {
+                                            "name": "timezone",
+                                            "type": "timezone",
+                                            "label": "Timezone"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "User Location"
+                                },
+                                {
+                                    "name": "description",
+                                    "type": "text",
+                                    "label": "Description"
+                                },
+                                {
+                                    "name": "name",
+                                    "type": "text",
+                                    "label": "Name"
+                                },
+                                {
+                                    "name": "allowed_tools",
+                                    "type": "text",
+                                    "label": "Allowed Tools"
+                                },
+                                {
+                                    "name": "headers",
+                                    "type": "collection",
+                                    "label": "Headers"
+                                },
+                                {
+                                    "name": "require_approval",
+                                    "type": "text",
+                                    "label": "Require Approval"
+                                },
+                                {
+                                    "name": "server_label",
+                                    "type": "text",
+                                    "label": "Server Label"
+                                },
+                                {
+                                    "name": "server_url",
+                                    "type": "url",
+                                    "label": "Server URL"
+                                },
+                                {
+                                    "name": "parameters",
+                                    "type": "collection",
+                                    "label": "Parameters"
+                                },
+                                {
+                                    "name": "strict",
+                                    "type": "boolean",
+                                    "label": "Strict"
+                                },
+                                {
+                                    "name": "filters",
+                                    "spec": [
+                                        {
+                                            "name": "type",
+                                            "type": "text",
+                                            "label": "Type"
+                                        },
+                                        {
+                                            "name": "key",
+                                            "type": "text",
+                                            "label": "Key"
+                                        },
+                                        {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Value"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Filters"
+                                },
+                                {
+                                    "name": "max_num_results",
+                                    "type": "number",
+                                    "label": "Max Results Number"
+                                },
+                                {
+                                    "name": "ranking_options",
+                                    "spec": [
+                                        {
+                                            "name": "ranker",
+                                            "type": "text",
+                                            "label": "Ranker"
+                                        },
+                                        {
+                                            "name": "score_threshold",
+                                            "type": "number",
+                                            "label": "Score Threshold"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Ranking Options"
+                                },
+                                {
+                                    "name": "vector_store_ids",
+                                    "spec": {
+                                        "type": "text"
+                                    },
+                                    "type": "array",
+                                    "label": "Vector Store IDs"
+                                },
+                                {
+                                    "name": "container",
+                                    "spec": [
+                                        {
+                                            "name": "type",
+                                            "type": "text",
+                                            "label": "Type"
+                                        },
+                                        {
+                                            "name": "file_ids",
+                                            "spec": {
+                                                "type": "text"
+                                            },
+                                            "type": "array",
+                                            "label": "File ids"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Container"
+                                },
+                                {
+                                    "name": "format",
+                                    "spec": [
+                                        {
+                                            "name": "type",
+                                            "type": "text",
+                                            "label": "Type"
+                                        },
+                                        {
+                                            "name": "definition",
+                                            "type": "text",
+                                            "label": "Definition"
+                                        },
+                                        {
+                                            "name": "syntax",
+                                            "type": "text",
+                                            "label": "Syntax"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Format"
+                                },
+                                {
+                                    "name": "background",
+                                    "type": "text",
+                                    "label": "Background"
+                                },
+                                {
+                                    "name": "moderation",
+                                    "type": "text",
+                                    "label": "Moderation"
+                                },
+                                {
+                                    "name": "n",
+                                    "type": "number",
+                                    "label": "N"
+                                },
+                                {
+                                    "name": "output_compression",
+                                    "type": "number",
+                                    "label": "Output compression"
+                                },
+                                {
+                                    "name": "output_format",
+                                    "type": "text",
+                                    "label": "Output format"
+                                },
+                                {
+                                    "name": "quality",
+                                    "type": "text",
+                                    "label": "Quality"
+                                },
+                                {
+                                    "name": "size",
+                                    "type": "text",
+                                    "label": "Size"
+                                }
+                            ],
+                            "type": "collection"
+                        },
+                        "type": "array",
+                        "label": "Tools"
+                    },
+                    {
+                        "name": "top_p",
+                        "type": "number",
+                        "label": "Top P"
+                    },
+                    {
+                        "name": "truncation",
+                        "type": "text",
+                        "label": "Truncation"
+                    },
+                    {
+                        "name": "usage",
+                        "spec": [
+                            {
+                                "name": "input_tokens",
+                                "type": "number",
+                                "label": "Input Tokens"
+                            },
+                            {
+                                "name": "input_tokens_details",
+                                "spec": [
+                                    {
+                                        "name": "cached_tokens",
+                                        "type": "number",
+                                        "label": "Cached Tokens"
+                                    }
+                                ],
+                                "type": "collection",
+                                "label": "Input Tokens Details"
+                            },
+                            {
+                                "name": "output_tokens",
+                                "type": "number",
+                                "label": "Output Tokens"
+                            },
+                            {
+                                "name": "output_tokens_details",
+                                "spec": [
+                                    {
+                                        "name": "reasoning_tokens",
+                                        "type": "number",
+                                        "label": "Reasoning Tokens"
+                                    }
+                                ],
+                                "type": "collection",
+                                "label": "Output Tokens Details"
+                            },
+                            {
+                                "name": "total_tokens",
+                                "type": "number",
+                                "label": "Total Tokens"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Usage"
+                    },
+                    {
+                        "name": "user",
+                        "type": "text",
+                        "label": "User"
+                    },
+                    {
+                        "name": "metadata",
+                        "type": "collection",
+                        "label": "Metadata"
+                    },
+                    {
+                        "name": "prompt_cache_key",
+                        "type": "text",
+                        "label": "Prompt Cache Key"
+                    },
+                    {
+                        "name": "safety_identifier",
+                        "type": "text",
+                        "label": "Safety Identifier"
+                    }
+                ],
+                "advanced": true
+            }
+        },
+        {
+            "id": 5,
+            "module": "google-sheets:updateRow",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 7002263
+            },
+            "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "values": {
+                    "6": "{{2.result.website_active_12_months}}",
+                    "7": "{{2.result.monetization_and_authenticity}}",
+                    "8": "{{2.result.instagram_url}}",
+                    "9": "{{2.result.instagram_active_60_days}}",
+                    "10": "{{2.result.retailer}}",
+                    "11": "{{2.result.site_credibility}}",
+                    "12": "{{2.result.notes}}",
+                    "13": "{{2.result.final_verdict}}"
+                },
+                "sheetId": "Leads Found",
+                "rowNumber": "{{22.`16`}}",
+                "spreadsheetId": "/YOUR_RESEARCH_SHEET_ID",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1200,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "from": {
+                            "label": "My Drive"
+                        },
+                        "mode": {
+                            "label": "Search by path"
+                        },
+                        "sheetId": {
+                            "label": "Leads Found"
+                        },
+                        "spreadsheetId": {
+                            "path": [
+                                "Praize Studio: Keywords Research and Approval "
+                            ]
+                        },
+                        "includesHeaders": {
+                            "label": "Yes",
+                            "nested": [
+                                {
+                                    "name": "values",
+                                    "spec": [
+                                        {
+                                            "name": "0",
+                                            "type": "text",
+                                            "label": "For Company (A)"
+                                        },
+                                        {
+                                            "name": "1",
+                                            "type": "text",
+                                            "label": "Author (B)"
+                                        },
+                                        {
+                                            "name": "2",
+                                            "type": "text",
+                                            "label": "Blog Name (C)"
+                                        },
+                                        {
+                                            "name": "3",
+                                            "type": "text",
+                                            "label": "URL (D)"
+                                        },
+                                        {
+                                            "name": "4",
+                                            "type": "text",
+                                            "label": "Domain (E)"
+                                        },
+                                        {
+                                            "name": "5",
+                                            "type": "text",
+                                            "label": "Email (F)"
+                                        },
+                                        {
+                                            "name": "6",
+                                            "type": "text",
+                                            "label": "Website Activity in the past 12 months? (G)"
+                                        },
+                                        {
+                                            "name": "7",
+                                            "type": "text",
+                                            "label": "Monetization and Authenticity (H)"
+                                        },
+                                        {
+                                            "name": "8",
+                                            "type": "text",
+                                            "label": "Instagram URL (I)"
+                                        },
+                                        {
+                                            "name": "9",
+                                            "type": "text",
+                                            "label": "Instagram Activiy in the past 60 days (J)"
+                                        },
+                                        {
+                                            "name": "10",
+                                            "type": "text",
+                                            "label": "Retailer (K)"
+                                        },
+                                        {
+                                            "name": "11",
+                                            "type": "text",
+                                            "label": "Site Credibility (L)"
+                                        },
+                                        {
+                                            "name": "12",
+                                            "type": "text",
+                                            "label": "Note (M)"
+                                        },
+                                        {
+                                            "name": "13",
+                                            "type": "text",
+                                            "label": "Final verdict (N)"
+                                        },
+                                        {
+                                            "name": "14",
+                                            "type": "text",
+                                            "label": "ClientID (O)"
+                                        },
+                                        {
+                                            "name": "15",
+                                            "type": "text",
+                                            "label": "StageID (P)"
+                                        },
+                                        {
+                                            "name": "16",
+                                            "type": "text",
+                                            "label": "RowID (Q)"
+                                        },
+                                        {
+                                            "name": "17",
+                                            "type": "text",
+                                            "label": "1. Approval process - Click after Blog Research flow is done (R)"
+                                        },
+                                        {
+                                            "name": "18",
+                                            "type": "text",
+                                            "label": "2. Start Outreach - Click only after approval process is done (S)"
+                                        },
+                                        {
+                                            "name": "19",
+                                            "type": "text",
+                                            "label": "(T)"
+                                        },
+                                        {
+                                            "name": "20",
+                                            "type": "text",
+                                            "label": "(U)"
+                                        },
+                                        {
+                                            "name": "21",
+                                            "type": "text",
+                                            "label": "(V)"
+                                        },
+                                        {
+                                            "name": "22",
+                                            "type": "text",
+                                            "label": "(W)"
+                                        },
+                                        {
+                                            "name": "23",
+                                            "type": "text",
+                                            "label": "(X)"
+                                        },
+                                        {
+                                            "name": "24",
+                                            "type": "text",
+                                            "label": "(Y)"
+                                        },
+                                        {
+                                            "name": "25",
+                                            "type": "text",
+                                            "label": "(Z)"
+                                        },
+                                        {
+                                            "name": "26",
+                                            "type": "text",
+                                            "label": "(AA)"
+                                        },
+                                        {
+                                            "name": "27",
+                                            "type": "text",
+                                            "label": "(AB)"
+                                        },
+                                        {
+                                            "name": "28",
+                                            "type": "text",
+                                            "label": "(AC)"
+                                        },
+                                        {
+                                            "name": "29",
+                                            "type": "text",
+                                            "label": "(AD)"
+                                        },
+                                        {
+                                            "name": "30",
+                                            "type": "text",
+                                            "label": "(AE)"
+                                        },
+                                        {
+                                            "name": "31",
+                                            "type": "text",
+                                            "label": "(AF)"
+                                        },
+                                        {
+                                            "name": "32",
+                                            "type": "text",
+                                            "label": "(AG)"
+                                        },
+                                        {
+                                            "name": "33",
+                                            "type": "text",
+                                            "label": "(AH)"
+                                        }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Values"
+                                }
+                            ]
+                        },
+                        "valueInputOption": {
+                            "mode": "chose",
+                            "label": "User entered"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            },
+                            "label": "My Google connection (your-email@example.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "mode",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "select",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "valueInputOption",
+                        "type": "select",
+                        "label": "Value input option",
+                        "validate": {
+                            "enum": [
+                                "USER_ENTERED",
+                                "RAW"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share",
+                                "team"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet ID",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "rowNumber",
+                        "type": "uinteger",
+                        "label": "Row number",
+                        "required": true
+                    },
+                    {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "values",
+                        "spec": [
+                            {
+                                "name": "0",
+                                "type": "text",
+                                "label": "For Company (A)"
+                            },
+                            {
+                                "name": "1",
+                                "type": "text",
+                                "label": "Author (B)"
+                            },
+                            {
+                                "name": "2",
+                                "type": "text",
+                                "label": "Blog Name (C)"
+                            },
+                            {
+                                "name": "3",
+                                "type": "text",
+                                "label": "URL (D)"
+                            },
+                            {
+                                "name": "4",
+                                "type": "text",
+                                "label": "Domain (E)"
+                            },
+                            {
+                                "name": "5",
+                                "type": "text",
+                                "label": "Email (F)"
+                            },
+                            {
+                                "name": "6",
+                                "type": "text",
+                                "label": "Website Activity in the past 12 months? (G)"
+                            },
+                            {
+                                "name": "7",
+                                "type": "text",
+                                "label": "Monetization and Authenticity (H)"
+                            },
+                            {
+                                "name": "8",
+                                "type": "text",
+                                "label": "Instagram URL (I)"
+                            },
+                            {
+                                "name": "9",
+                                "type": "text",
+                                "label": "Instagram Activiy in the past 60 days (J)"
+                            },
+                            {
+                                "name": "10",
+                                "type": "text",
+                                "label": "Retailer (K)"
+                            },
+                            {
+                                "name": "11",
+                                "type": "text",
+                                "label": "Site Credibility (L)"
+                            },
+                            {
+                                "name": "12",
+                                "type": "text",
+                                "label": "Note (M)"
+                            },
+                            {
+                                "name": "13",
+                                "type": "text",
+                                "label": "Final verdict (N)"
+                            },
+                            {
+                                "name": "14",
+                                "type": "text",
+                                "label": "ClientID (O)"
+                            },
+                            {
+                                "name": "15",
+                                "type": "text",
+                                "label": "StageID (P)"
+                            },
+                            {
+                                "name": "16",
+                                "type": "text",
+                                "label": "RowID (Q)"
+                            },
+                            {
+                                "name": "17",
+                                "type": "text",
+                                "label": "1. Approval process - Click after Blog Research flow is done (R)"
+                            },
+                            {
+                                "name": "18",
+                                "type": "text",
+                                "label": "2. Start Outreach - Click only after approval process is done (S)"
+                            },
+                            {
+                                "name": "19",
+                                "type": "text",
+                                "label": "(T)"
+                            },
+                            {
+                                "name": "20",
+                                "type": "text",
+                                "label": "(U)"
+                            },
+                            {
+                                "name": "21",
+                                "type": "text",
+                                "label": "(V)"
+                            },
+                            {
+                                "name": "22",
+                                "type": "text",
+                                "label": "(W)"
+                            },
+                            {
+                                "name": "23",
+                                "type": "text",
+                                "label": "(X)"
+                            },
+                            {
+                                "name": "24",
+                                "type": "text",
+                                "label": "(Y)"
+                            },
+                            {
+                                "name": "25",
+                                "type": "text",
+                                "label": "(Z)"
+                            },
+                            {
+                                "name": "26",
+                                "type": "text",
+                                "label": "(AA)"
+                            },
+                            {
+                                "name": "27",
+                                "type": "text",
+                                "label": "(AB)"
+                            },
+                            {
+                                "name": "28",
+                                "type": "text",
+                                "label": "(AC)"
+                            },
+                            {
+                                "name": "29",
+                                "type": "text",
+                                "label": "(AD)"
+                            },
+                            {
+                                "name": "30",
+                                "type": "text",
+                                "label": "(AE)"
+                            },
+                            {
+                                "name": "31",
+                                "type": "text",
+                                "label": "(AF)"
+                            },
+                            {
+                                "name": "32",
+                                "type": "text",
+                                "label": "(AG)"
+                            },
+                            {
+                                "name": "33",
+                                "type": "text",
+                                "label": "(AH)"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Values"
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    },
+    "io": {
+        "input_spec": [
+            {
+                "help": "",
+                "name": "rows",
+                "spec": {
+                    "type": "any",
+                    "default": "",
+                    "required": false
+                },
+                "type": "array",
+                "label": "",
+                "required": false
+            }
+        ],
+        "output_spec": []
+    }
+}

@@ -1,0 +1,1105 @@
+{
+    "name": "2.1 Blog Research -> Activate Approval Process",
+    "flow": [
+        {
+            "id": 29,
+            "module": "google-sheets:watchUpdatedCells",
+            "version": 2,
+            "parameters": {
+                "__IMTHOOK__": 1852965
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 150
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTHOOK__": {
+                            "data": {
+                                "editable": "false"
+                            },
+                            "label": "Start approval process webhook"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTHOOK__",
+                        "type": "hook:google-sheets2",
+                        "label": "Webhook",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 26,
+            "module": "builtin:BasicRepeater",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "step": "1",
+                "start": "1",
+                "repeats": "10"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 150
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "start",
+                        "type": "number",
+                        "label": "Initial value",
+                        "required": true
+                    },
+                    {
+                        "name": "repeats",
+                        "type": "number",
+                        "label": "Repeats",
+                        "required": true,
+                        "validate": {
+                            "max": 10000,
+                            "min": 0
+                        }
+                    },
+                    {
+                        "name": "step",
+                        "type": "number",
+                        "label": "Step",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 40,
+            "module": "util:FunctionSleep",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "duration": "60"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 150
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "duration",
+                        "type": "uinteger",
+                        "label": "Delay",
+                        "required": true,
+                        "validate": {
+                            "max": 300,
+                            "min": 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": 18,
+            "module": "google-sheets:filterRowsAdvanced",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 7002263
+            },
+            "mapper": {
+                "tq": "select * \nwhere N is null or N = '' or N = '-'",
+                "from": "drive",
+                "limit": "200",
+                "select": "list",
+                "sheetId": 0,
+                "spreadsheetId": "/YOUR_RESEARCH_SHEET_ID"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 150
+                },
+                "restore": {
+                    "expect": {
+                        "from": {
+                            "label": "My Drive"
+                        },
+                        "select": {
+                            "label": "Search by path"
+                        },
+                        "sheetId": {
+                            "label": "Leads Found"
+                        },
+                        "spreadsheetId": {
+                            "path": [
+                                "Praize Studio: Keywords Research and Approval "
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            },
+                            "label": "My Google connection (your-email@example.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "select",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "list",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tq",
+                        "type": "text",
+                        "label": "Query",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share",
+                                "team"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet ID",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "type": "uinteger",
+                        "label": "Total number of bundles"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "type": "uinteger",
+                        "label": "Bundle order position"
+                    },
+                    {
+                        "name": "0",
+                        "type": "text",
+                        "label": "For Company (A)"
+                    },
+                    {
+                        "name": "1",
+                        "type": "text",
+                        "label": "Author (B)"
+                    },
+                    {
+                        "name": "2",
+                        "type": "text",
+                        "label": "Blog Name (C)"
+                    },
+                    {
+                        "name": "3",
+                        "type": "text",
+                        "label": "URL (D)"
+                    },
+                    {
+                        "name": "4",
+                        "type": "text",
+                        "label": "Domain (E)"
+                    },
+                    {
+                        "name": "5",
+                        "type": "text",
+                        "label": "Email (F)"
+                    },
+                    {
+                        "name": "6",
+                        "type": "text",
+                        "label": "Website Activity in the past 12 months? (G)"
+                    },
+                    {
+                        "name": "7",
+                        "type": "text",
+                        "label": "Monetization and Authenticity (H)"
+                    },
+                    {
+                        "name": "8",
+                        "type": "text",
+                        "label": "Instagram URL (I)"
+                    },
+                    {
+                        "name": "9",
+                        "type": "text",
+                        "label": "Instagram Activiy in the past 60 days (J)"
+                    },
+                    {
+                        "name": "10",
+                        "type": "text",
+                        "label": "Retailer (K)"
+                    },
+                    {
+                        "name": "11",
+                        "type": "text",
+                        "label": "Site Credibility (L)"
+                    },
+                    {
+                        "name": "12",
+                        "type": "text",
+                        "label": "Note (M)"
+                    },
+                    {
+                        "name": "13",
+                        "type": "text",
+                        "label": "Final verdict (N)"
+                    },
+                    {
+                        "name": "14",
+                        "type": "text",
+                        "label": "ClientID (O)"
+                    },
+                    {
+                        "name": "15",
+                        "type": "text",
+                        "label": "StageID (P)"
+                    },
+                    {
+                        "name": "16",
+                        "type": "number",
+                        "label": "RowID (Q)"
+                    },
+                    {
+                        "name": "17",
+                        "type": "text",
+                        "label": "1. Approval process - Click after Blog Research flow is done (R)"
+                    },
+                    {
+                        "name": "18",
+                        "type": "text",
+                        "label": "2. Start Outreach - Click only after approval process is done (S)"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 28,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 1200,
+                    "y": 150
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 27,
+                            "module": "google-sheets:updateRow",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 7002263
+                            },
+                            "filter": {
+                                "name": "exists",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{18.`__IMTLENGTH__`}}",
+                                            "b": "0",
+                                            "o": "number:greater"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "from": "drive",
+                                "mode": "select",
+                                "values": {
+                                    "13": "In Progress"
+                                },
+                                "sheetId": "Leads Found",
+                                "rowNumber": "{{18.`16`}}",
+                                "spreadsheetId": "/YOUR_RESEARCH_SHEET_ID",
+                                "includesHeaders": true,
+                                "useColumnHeaders": false,
+                                "valueInputOption": "USER_ENTERED"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "from": {
+                                            "label": "My Drive"
+                                        },
+                                        "mode": {
+                                            "label": "Search by path"
+                                        },
+                                        "sheetId": {
+                                            "label": "Leads Found"
+                                        },
+                                        "spreadsheetId": {
+                                            "path": [
+                                                "Praize Studio: Keywords Research and Approval "
+                                            ]
+                                        },
+                                        "includesHeaders": {
+                                            "label": "Yes"
+                                        },
+                                        "useColumnHeaders": {
+                                            "label": "No",
+                                            "nested": [
+                                                {
+                                                    "name": "values",
+                                                    "spec": [
+                                                        {
+                                                            "name": "0",
+                                                            "type": "text",
+                                                            "label": "For Company (A)"
+                                                        },
+                                                        {
+                                                            "name": "1",
+                                                            "type": "text",
+                                                            "label": "Author (B)"
+                                                        },
+                                                        {
+                                                            "name": "2",
+                                                            "type": "text",
+                                                            "label": "Blog Name (C)"
+                                                        },
+                                                        {
+                                                            "name": "3",
+                                                            "type": "text",
+                                                            "label": "URL (D)"
+                                                        },
+                                                        {
+                                                            "name": "4",
+                                                            "type": "text",
+                                                            "label": "Domain (E)"
+                                                        },
+                                                        {
+                                                            "name": "5",
+                                                            "type": "text",
+                                                            "label": "Email (F)"
+                                                        },
+                                                        {
+                                                            "name": "6",
+                                                            "type": "text",
+                                                            "label": "Website Activity in the past 12 months? (G)"
+                                                        },
+                                                        {
+                                                            "name": "7",
+                                                            "type": "text",
+                                                            "label": "Monetization and Authenticity (H)"
+                                                        },
+                                                        {
+                                                            "name": "8",
+                                                            "type": "text",
+                                                            "label": "Instagram URL (I)"
+                                                        },
+                                                        {
+                                                            "name": "9",
+                                                            "type": "text",
+                                                            "label": "Instagram Activiy in the past 60 days (J)"
+                                                        },
+                                                        {
+                                                            "name": "10",
+                                                            "type": "text",
+                                                            "label": "Retailer (K)"
+                                                        },
+                                                        {
+                                                            "name": "11",
+                                                            "type": "text",
+                                                            "label": "Site Credibility (L)"
+                                                        },
+                                                        {
+                                                            "name": "12",
+                                                            "type": "text",
+                                                            "label": "Note (M)"
+                                                        },
+                                                        {
+                                                            "name": "13",
+                                                            "type": "text",
+                                                            "label": "Final verdict (N)"
+                                                        },
+                                                        {
+                                                            "name": "14",
+                                                            "type": "text",
+                                                            "label": "ClientID (O)"
+                                                        },
+                                                        {
+                                                            "name": "15",
+                                                            "type": "text",
+                                                            "label": "StageID (P)"
+                                                        },
+                                                        {
+                                                            "name": "16",
+                                                            "type": "text",
+                                                            "label": "RowID (Q)"
+                                                        },
+                                                        {
+                                                            "name": "17",
+                                                            "type": "text",
+                                                            "label": "1. Approval process - Click after Blog Research flow is done (R)"
+                                                        },
+                                                        {
+                                                            "name": "18",
+                                                            "type": "text",
+                                                            "label": "2. Start Outreach - Click only after approval process is done (S)"
+                                                        },
+                                                        {
+                                                            "name": "19",
+                                                            "type": "text",
+                                                            "label": "(T)"
+                                                        },
+                                                        {
+                                                            "name": "20",
+                                                            "type": "text",
+                                                            "label": "(U)"
+                                                        },
+                                                        {
+                                                            "name": "21",
+                                                            "type": "text",
+                                                            "label": "(V)"
+                                                        },
+                                                        {
+                                                            "name": "22",
+                                                            "type": "text",
+                                                            "label": "(W)"
+                                                        },
+                                                        {
+                                                            "name": "23",
+                                                            "type": "text",
+                                                            "label": "(X)"
+                                                        },
+                                                        {
+                                                            "name": "24",
+                                                            "type": "text",
+                                                            "label": "(Y)"
+                                                        },
+                                                        {
+                                                            "name": "25",
+                                                            "type": "text",
+                                                            "label": "(Z)"
+                                                        },
+                                                        {
+                                                            "name": "26",
+                                                            "type": "text",
+                                                            "label": "(AA)"
+                                                        },
+                                                        {
+                                                            "name": "27",
+                                                            "type": "text",
+                                                            "label": "(AB)"
+                                                        },
+                                                        {
+                                                            "name": "28",
+                                                            "type": "text",
+                                                            "label": "(AC)"
+                                                        },
+                                                        {
+                                                            "name": "29",
+                                                            "type": "text",
+                                                            "label": "(AD)"
+                                                        },
+                                                        {
+                                                            "name": "30",
+                                                            "type": "text",
+                                                            "label": "(AE)"
+                                                        },
+                                                        {
+                                                            "name": "31",
+                                                            "type": "text",
+                                                            "label": "(AF)"
+                                                        },
+                                                        {
+                                                            "name": "32",
+                                                            "type": "text",
+                                                            "label": "(AG)"
+                                                        },
+                                                        {
+                                                            "name": "33",
+                                                            "type": "text",
+                                                            "label": "(AH)"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Values in columns",
+                                                    "metadata": [
+                                                        [
+                                                            [
+                                                                "For Company",
+                                                                "Author",
+                                                                "Blog Name",
+                                                                "URL",
+                                                                "Domain",
+                                                                "Email",
+                                                                "Website Activity in the past 12 months?",
+                                                                "Monetization and Authenticity",
+                                                                "Instagram URL",
+                                                                "Instagram Activiy in the past 60 days",
+                                                                "Retailer",
+                                                                "Site Credibility",
+                                                                "Note",
+                                                                "Final verdict",
+                                                                "ClientID",
+                                                                "StageID",
+                                                                "RowID",
+                                                                "1. Approval process - Click after Blog Research flow is done",
+                                                                "2. Start Outreach - Click only after approval process is done"
+                                                            ]
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "valueInputOption": {
+                                            "mode": "chose",
+                                            "label": "User entered"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "google"
+                                            },
+                                            "label": "My Google connection (your-email@example.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:google",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "mode",
+                                        "type": "select",
+                                        "label": "Search Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "select",
+                                                "fromAll",
+                                                "map"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "valueInputOption",
+                                        "type": "select",
+                                        "label": "Value input option",
+                                        "validate": {
+                                            "enum": [
+                                                "USER_ENTERED",
+                                                "RAW"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "from",
+                                        "type": "select",
+                                        "label": "Drive",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "drive",
+                                                "share",
+                                                "team"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "spreadsheetId",
+                                        "type": "file",
+                                        "label": "Spreadsheet Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "sheetId",
+                                        "type": "select",
+                                        "label": "Sheet Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "rowNumber",
+                                        "type": "uinteger",
+                                        "label": "Row number",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "includesHeaders",
+                                        "type": "select",
+                                        "label": "Table contains headers",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                true,
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "useColumnHeaders",
+                                        "type": "select",
+                                        "label": "Use column headers as IDs of the columns",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                true,
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "values",
+                                        "spec": [
+                                            {
+                                                "name": "0",
+                                                "type": "text",
+                                                "label": "For Company (A)"
+                                            },
+                                            {
+                                                "name": "1",
+                                                "type": "text",
+                                                "label": "Author (B)"
+                                            },
+                                            {
+                                                "name": "2",
+                                                "type": "text",
+                                                "label": "Blog Name (C)"
+                                            },
+                                            {
+                                                "name": "3",
+                                                "type": "text",
+                                                "label": "URL (D)"
+                                            },
+                                            {
+                                                "name": "4",
+                                                "type": "text",
+                                                "label": "Domain (E)"
+                                            },
+                                            {
+                                                "name": "5",
+                                                "type": "text",
+                                                "label": "Email (F)"
+                                            },
+                                            {
+                                                "name": "6",
+                                                "type": "text",
+                                                "label": "Website Activity in the past 12 months? (G)"
+                                            },
+                                            {
+                                                "name": "7",
+                                                "type": "text",
+                                                "label": "Monetization and Authenticity (H)"
+                                            },
+                                            {
+                                                "name": "8",
+                                                "type": "text",
+                                                "label": "Instagram URL (I)"
+                                            },
+                                            {
+                                                "name": "9",
+                                                "type": "text",
+                                                "label": "Instagram Activiy in the past 60 days (J)"
+                                            },
+                                            {
+                                                "name": "10",
+                                                "type": "text",
+                                                "label": "Retailer (K)"
+                                            },
+                                            {
+                                                "name": "11",
+                                                "type": "text",
+                                                "label": "Site Credibility (L)"
+                                            },
+                                            {
+                                                "name": "12",
+                                                "type": "text",
+                                                "label": "Note (M)"
+                                            },
+                                            {
+                                                "name": "13",
+                                                "type": "text",
+                                                "label": "Final verdict (N)"
+                                            },
+                                            {
+                                                "name": "14",
+                                                "type": "text",
+                                                "label": "ClientID (O)"
+                                            },
+                                            {
+                                                "name": "15",
+                                                "type": "text",
+                                                "label": "StageID (P)"
+                                            },
+                                            {
+                                                "name": "16",
+                                                "type": "text",
+                                                "label": "RowID (Q)"
+                                            },
+                                            {
+                                                "name": "17",
+                                                "type": "text",
+                                                "label": "1. Approval process - Click after Blog Research flow is done (R)"
+                                            },
+                                            {
+                                                "name": "18",
+                                                "type": "text",
+                                                "label": "2. Start Outreach - Click only after approval process is done (S)"
+                                            },
+                                            {
+                                                "name": "19",
+                                                "type": "text",
+                                                "label": "(T)"
+                                            },
+                                            {
+                                                "name": "20",
+                                                "type": "text",
+                                                "label": "(U)"
+                                            },
+                                            {
+                                                "name": "21",
+                                                "type": "text",
+                                                "label": "(V)"
+                                            },
+                                            {
+                                                "name": "22",
+                                                "type": "text",
+                                                "label": "(W)"
+                                            },
+                                            {
+                                                "name": "23",
+                                                "type": "text",
+                                                "label": "(X)"
+                                            },
+                                            {
+                                                "name": "24",
+                                                "type": "text",
+                                                "label": "(Y)"
+                                            },
+                                            {
+                                                "name": "25",
+                                                "type": "text",
+                                                "label": "(Z)"
+                                            },
+                                            {
+                                                "name": "26",
+                                                "type": "text",
+                                                "label": "(AA)"
+                                            },
+                                            {
+                                                "name": "27",
+                                                "type": "text",
+                                                "label": "(AB)"
+                                            },
+                                            {
+                                                "name": "28",
+                                                "type": "text",
+                                                "label": "(AC)"
+                                            },
+                                            {
+                                                "name": "29",
+                                                "type": "text",
+                                                "label": "(AD)"
+                                            },
+                                            {
+                                                "name": "30",
+                                                "type": "text",
+                                                "label": "(AE)"
+                                            },
+                                            {
+                                                "name": "31",
+                                                "type": "text",
+                                                "label": "(AF)"
+                                            },
+                                            {
+                                                "name": "32",
+                                                "type": "text",
+                                                "label": "(AG)"
+                                            },
+                                            {
+                                                "name": "33",
+                                                "type": "text",
+                                                "label": "(AH)"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Values in columns",
+                                        "metadata": [
+                                            [
+                                                [
+                                                    "For Company",
+                                                    "Author",
+                                                    "Blog Name",
+                                                    "URL",
+                                                    "Domain",
+                                                    "Email",
+                                                    "Website Activity in the past 12 months?",
+                                                    "Monetization and Authenticity",
+                                                    "Instagram URL",
+                                                    "Instagram Activiy in the past 60 days",
+                                                    "Retailer",
+                                                    "Site Credibility",
+                                                    "Note",
+                                                    "Final verdict",
+                                                    "ClientID",
+                                                    "StageID",
+                                                    "RowID",
+                                                    "1. Approval process - Click after Blog Research flow is done",
+                                                    "2. Start Outreach - Click only after approval process is done"
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 20,
+                            "module": "builtin:BasicAggregator",
+                            "version": 1,
+                            "parameters": {
+                                "feeder": 18
+                            },
+                            "mapper": {
+                                "0": "{{18.`0`}}",
+                                "1": "{{18.`1`}}",
+                                "2": "{{18.`2`}}",
+                                "3": "{{18.`3`}}",
+                                "4": "{{18.`4`}}",
+                                "5": "{{18.`5`}}",
+                                "6": "{{18.`6`}}",
+                                "7": "{{18.`7`}}",
+                                "8": "{{18.`8`}}",
+                                "9": "{{18.`9`}}",
+                                "10": "{{18.`10`}}",
+                                "11": "{{18.`11`}}",
+                                "12": "{{18.`12`}}",
+                                "13": "{{18.`13`}}",
+                                "14": "{{18.`14`}}",
+                                "15": "{{18.`15`}}",
+                                "16": "{{18.`16`}}",
+                                "__IMTINDEX__": "{{18.`__IMTINDEX__`}}",
+                                "__IMTLENGTH__": "{{18.`__IMTLENGTH__`}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "extra": {
+                                        "feeder": {
+                                            "label": "Google Sheets - Search Rows (Advanced) [18]"
+                                        },
+                                        "target": {
+                                            "label": "Custom"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "id": 21,
+                            "module": "scenario-service:CallSubscenario",
+                            "version": 2,
+                            "parameters": {
+                                "scenario": "SCN_4058489",
+                                "shouldWaitForExecutionEnd": false
+                            },
+                            "filter": {
+                                "name": "check",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{20.array}}",
+                                            "b": "0",
+                                            "o": "array:greater"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "data": {
+                                    "rows": "{{20.array}}"
+                                }
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "data": {
+                                            "nested": {
+                                                "rows": {
+                                                    "mode": "edit"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "parameters": {
+                                        "scenario": {
+                                            "label": "2.2"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "scenario",
+                                        "type": "scenario",
+                                        "label": "Scenario",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "shouldWaitForExecutionEnd",
+                                        "type": "boolean",
+                                        "label": "Wait for the scenario to finish",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "data",
+                                        "spec": [
+                                            {
+                                                "name": "rows",
+                                                "spec": {
+                                                    "name": "value",
+                                                    "spec": [
+                                                        {
+                                                            "name": "for_company",
+                                                            "type": "text",
+                                                            "label": ""
+                                                        },
+                                                        {
+                                                            "name": "Author",
+                                                            "type": "text",
+                                                            "label": ""
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "required": true
+                                                },
+                                                "type": "array",
+                                                "label": ""
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Scenario Inputs"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "executionId",
+                                        "type": "text",
+                                        "label": "Execution ID"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "disabled": true,
+                    "flow": [
+                        {
+                            "id": 45,
+                            "module": "placeholder:Placeholder",
+                            "filter": {
+                                "name": "",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{18.`__IMTLENGTH__`}}",
+                                            "b": "0",
+                                            "o": "number:equal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 300
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": true,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}
