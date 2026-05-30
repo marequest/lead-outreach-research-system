@@ -140,4 +140,4 @@ A helper script that runs the placeholder substitution is included at [`scripts/
 
 ---
 
-*Part of my [portfolio](https://www.markojovicic.rs/) — AI & Automation Engineering. See also: [other projects](https://github.com/marequest).*
+*Rewritten with AI from existing documents. See also: [other projects](https://github.com/marequest).*
