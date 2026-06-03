@@ -7,6 +7,7 @@
 ![Type](https://img.shields.io/badge/type-human--in--the--loop-orange)
 
 ---
+<img width="1407" height="587" alt="Screenshot 2026-06-03 at 18 39 18" src="https://github.com/user-attachments/assets/c083f051-259b-42db-9c62-61e8f36ec12e" />
 
 ## 🎯 The Problem
 
